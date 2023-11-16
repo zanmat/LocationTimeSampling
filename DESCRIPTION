@@ -1,0 +1,13 @@
+Package: LocationTimeSampling
+Version: 0.0.0.9000
+Title: Build A Package From Rmarkdown File
+Description: Use Rmarkdown First method to build your package. Start your package with documentation. Everything can be set from a Rmarkdown file in your project.
+Authors@R: person(given = "Mattia",
+       family = "Zanazzi",
+       role = c("aut", "cre"),
+       email = "zanazzi@unhcr.org",
+       comment = c(ORCID = "0000-0000-0000-0000"))
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
