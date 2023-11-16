@@ -1,3 +1,5 @@
 # LocationTimeSampling (development version)
 
-* Initial CRAN submission.
+* Initial version.
+
+

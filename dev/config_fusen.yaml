@@ -1,0 +1,19 @@
+flat_first.Rmd:
+  path: dev/flat_first.Rmd
+  state: active
+  R:
+  - R/lts_extrapolate_numbers.R
+  - R/lts_sample_shift.R
+  - R/lts_setup.R
+  tests:
+  - tests/testthat/test-lts_setup.R
+  - tests/testthat/test-lts_sample_shift.R
+  - tests/testthat/test-lts_extrapolate_numbers.R
+  vignettes: vignettes/get-started.Rmd
+  inflate:
+    flat_file: dev/flat_first.Rmd
+    vignette_name: Get started
+    open_vignette: true
+    check: true
+    document: true
+    overwrite: ask

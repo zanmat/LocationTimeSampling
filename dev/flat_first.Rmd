@@ -40,142 +40,202 @@ and `system.file()` to read it in your examples.
 pkgload::load_all(path = here::here(), export_all = FALSE)
 
 # You will be able to read your example data file in each of your function examples and tests as follows - see chunks below
-datafile <- system.file("nyc_squirrels_sample.csv", package = "LocationTimeSampling")
-nyc_squirrels <- read.csv(datafile, encoding = "UTF-8")
+datafile <- system.file("day1_universe.csv", package = "LocationTimeSampling")
+day1_universe <- read.csv(datafile, encoding = "UTF-8")
 
-nyc_squirrels
+day1_universe
 ```
 
 
-# The first function of the package: Calculate the median of a vector
+# Build the configuration file for time location
 
-<!--
-Create a chunk for the core of the function
-
-- The chunk needs to be named `function` at least
-- It contains the code of a documented function
-- The chunk can also be named `function-my_median` to make it easily
-findable in your Rmd
-- Let the `@examples` part empty, and use the next `examples` chunk instead to present reproducible examples
-
-After inflating the template
-
--  This function code will automatically be added in a new file in the "R/" directory
--->
-
-```{r function}
-#' My median
-#'
-#' @param x Vector of Numeric values
-#' @inheritParams stats::median
-#'
-#' @return
-#' Median of vector x
+# lts_setup
+    
+```{r function-lts_setup}
+#' lts_setup
+#' 
+#' Apply a factorial design on all potential combination of time and location -
+#' includes the possibiity to add ad-hoc constraints
+#' 
+#' The function will save an xlsform to be used for data collection
+#'  preconfigured with the required  data universe
+#' 
+#' @param location (Bus terminal), point (bus gate) and 
+#' @param time (timeshedule for bus).
+#' @param constraint restriction ad-hic
+#' @param filepath to save the xlsform 
+#' @return result will be a list that will include all valid time/location combination within a day 
+#' 
 #' @export
-#'
-#' @examples
-my_median <- function(x, na.rm = TRUE) {
-  if (!is.numeric(x)) {stop("x should be numeric")}
-  stats::median(x, na.rm = na.rm)
+lts_setup <- function(){
+    
 }
 ```
-
-<!--
-Create a chunk with an example of use for your function
-
-- The chunk needs to be named `examples` at least
-- It contains working examples of your function
-- The chunk is better be named `examples-my_median` to be handled
-correctly when inflated as a vignette
-
-After inflating the template
-
--  This example will automatically be added in the '@examples' part of our function above in the "R/" directory
-- This example will automatically be added in the vignette created from this Rmd template
--->
-
-```{r examples}
-my_median(1:12)
-
-# Example with your dataset in "inst/"
-datafile <- system.file("nyc_squirrels_sample.csv", package = "LocationTimeSampling")
-nyc_squirrels <- read.csv(datafile, encoding = "UTF-8")
-# Apply my function
-my_median(nyc_squirrels[,"hectare_squirrel_number"])
+  
+```{r example-lts_setup}
+lts_setup()
 ```
-
-<!--
-Create a chunk with a test of use for your function
-
-- The chunk needs to be named `tests` at least
-- It contains working tests of your function
-- The chunk is better be named `tests-my_median` to be handled
-correctly when inflated as a vignette
-
-After inflating the template
-
--  This test code will automatically be added in the "tests/testthat/" directory
--->
-
-```{r tests}
-test_that("my_median works properly and show error if needed", {
-  expect_true(my_median(1:12) == 6.5)
-  expect_error(my_median("text"))
-})
-
-# Test with your dataset in "inst/"
-datafile <- system.file("nyc_squirrels_sample.csv", package = "LocationTimeSampling")
-nyc_squirrels <- read.csv(datafile, encoding = "UTF-8")
-# Apply test on my function
-test_that("my_median works properly with internal dataset", {
-  expect_equal(my_median(nyc_squirrels[,"hectare_squirrel_number"]), 3)
+  
+```{r tests-lts_setup}
+test_that("lts_setup works", {
+  expect_true(inherits(lts_setup, "function")) 
 })
 ```
+  
 
-# Calculate the mean of a vector
 
-<!--
-There can be other functions, examples and tests in your flat template.
-Each of them will be inflated in a different file, provided that there is a level-1 or level-2 section title to separate from previous functions.
--->
 
-## Use sub-functions in the same chunk
+# Sample data collection shift - aka an assignement for one person at one time for one location
 
-```{r function-my_other_median}
-#' My Other median
-#'
-#' @param x Vector of Numeric values
-#' @inheritParams stats::median
-#'
-#' @return
-#' Median of vector x
+# lts_sample_shift
+    
+```{r function-lts_sample_shift}
+#' lts_sample_shift
+#' 
+#' Draw the sample of ata collection shift to perform from the full 
+#' location time universe 
+#' 
+#' NEXT - if stratified sampling then need to input data collected from previous
+#'  shift - this will allow to calculate weight to apply for the next shift
+#'   during the extrapolation
+#' @param config_path path to the the configuration file
+#' @param sample_size sample size neeeded
+#' @param start_date enforce mdy "11-01-23"
+#' @param end_date  enforce mdy  "11-30-23"
+#' @param strata "low" "mid-low" "mid-high" "high" if strata is NULL then default is "low"
+#' @param filename file to save the output 
+#' @return selection of specific shift selected as sample (day / time / terminal / gate )
+#' 
 #' @export
-#'
-#' @examples
-my_other_median <- function(x, na.rm = TRUE) {
-  if (!is.numeric(x)) {stop("x should be numeric")}
-  sub_median(x, na.rm =na.rm)
+lts_sample_shift <- function(config_path,
+                             sample_size = 400,
+                             start_date, 
+                             end_date,
+                             strata = "low",
+                             filename){
+  
+
+ 
+config <-   readxl::read_excel(config_path, sheet = 1) |> 
+  tidyr::separate(segment, 
+                  into = c("terminal", "gate", "timeperiod"), 
+                  sep = " - ")
+  
+universe <- 
+  tidyr::expand_grid(day = lubridate::as_date(lubridate::mdy(start_date):lubridate::mdy(end_date)), 
+ # tidyr::expand_grid(day = lubridate::make_date(2023, 11, 01:30), 
+              config) |> 
+  dplyr::transmute(day, timeperiod, terminal, gate,
+            schedule = timeperiod,
+            start = stringr::str_match(schedule, "^(.+?).00")[,2], 
+            end = stringr::str_match(schedule, "a (.+).00$")[,2], 
+            mid_schedule = (as.numeric(start) + as.numeric(end)) / 2) |> 
+  dplyr::arrange(day, timeperiod, terminal, gate)
+
+#sample_size <- 400 # turns for the whole month
+srs_sample_size <- sample_size * .2
+sys_sample_size <- sample_size * .8 # based on the June pilot
+
+systematic_sample <- function(.x, n) {
+  random_offset <- sample(nrow(.x)/n, 1)
+    sampled_turns <- .x[round(seq(random_offset, 
+                                  nrow(.x), 
+                                  by = (nrow(.x)/n)), 0),]
 }
 
-#' Core of the median not exported
-#' @param x Vector of Numeric values
-#' @inheritParams stats::median
-sub_median <- function(x, na.rm = TRUE) {
-  stats::median(x, na.rm)
+
+# this is kosher for now, but we should do it differently in the future...
+split_srs <- universe |> 
+                dplyr::filter(strata == "low")
+
+split_sys <- dplyr::anti_join(universe, split_srs)
+
+sampled_turns_srs <- split_srs |> 
+                      dplyr::arrange(day, timeperiod, terminal, gate) |>
+                      systematic_sample(srs_sample_size)
+
+sampled_turns_sys <- split_sys |> 
+  systematic_sample(n = round(sys_sample_size, 0)) |> 
+  dplyr::arrange(day, timeperiod, terminal, gate)
+
+sampled_turns <- dplyr::bind_rows(sampled_turns_srs, sampled_turns_sys) |> 
+                 dplyr::arrange(day, timeperiod, terminal, gate)
+
+# check that the workload is distributed almost equally over the course of the month
+#cat(sampled_turns |> dplyr::count(day) |> dplyr::count(n))
+
+# month = substr(sampled_turns$day,6,7)
+# year = substr(sampled_turns$day,1,4)
+# today=today()
+# export file
+# filename <- paste(today," ", month, "-", year, "-", "(pps)", "timeperiods Conteo Tacna_.xlsx")
+writexl::write_xlsx(sampled_turns, path=filename) 
+    
 }
 ```
+  
+```{r example-lts_sample_shift}
+## day1_universe.xlsx
+config_path <- system.file("day1_universe.xlsx", package = "LocationTimeSampling")
 
-```{r examples-my_other_median}
-my_other_median(1:12)
+
+lts_sample_shift(config_path,
+                 sample_size = 400,
+                 start_date = "11-01-23", 
+                 end_date = "11-30-23",
+                 strata = "low",
+                 filename = "sampleshift.xlsx")
 ```
-
-```{r tests-my_other_median}
-test_that("my_median works properly and show error if needed", {
-  expect_true(my_other_median(1:12) == 6.5)
-  expect_error(my_other_median("text"))
+  
+```{r tests-lts_sample_shift}
+test_that("lts_sample_shift works", {
+  expect_true(inherits(lts_sample_shift, "function")) 
 })
 ```
+  
 
+# An enumerator allocation function
+
+Assigning to enumerator each of the shift selected within the sample based on their availability
+
+
+# Extrapolate the data collection results to obtain total population estimation
+# lts_extrapolate_numbers
+    
+```{r function-lts_extrapolate_numbers}
+#' Title
+#' 
+#' Description
+#' 
+#' @param location/point
+#' @param time
+#' @param day
+#' @param number
+#' @param weight
+#' 
+#' @return a list including weekly estimates of entry and exist 
+#'            together a visual barchart and  line chart  
+#' 
+#' @export
+lts_extrapolate_numbers <- function(){
+    
+  
+  
+}
+```
+  
+```{r example-lts_extrapolate_numbers}
+lts_extrapolate_numbers()
+```
+  
+```{r tests-lts_extrapolate_numbers}
+test_that("lts_extrapolate_numbers works", {
+  expect_true(inherits(lts_extrapolate_numbers, "function")) 
+})
+```
+  
+ 
+ 
 <!--
 # There can be development actions
 
